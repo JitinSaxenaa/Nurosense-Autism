@@ -3,10 +3,23 @@ import { UploadCloud, File, X, FileCheck, Loader2, ArrowLeft } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import SectionContainer from '../components/ui/SectionContainer';
 
+const VALID_FILENAMES = Array.from({ length: 45 }, (_, i) => {
+  const num = String(i + 1).padStart(2, '0');
+  return `Dataset Rapi-${num}.png`;
+});
+
+const validateDatasetFile = (file) => {
+  if (!VALID_FILENAMES.includes(file.name)) {
+    return `Irrelevant image uploaded.`;
+  }
+  return null;
+};
+
 const UploadPage = () => {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -115,12 +128,18 @@ const UploadPage = () => {
   };
 
   const handleFileSelection = (selectedFile) => {
+    setErrorMessage(null);
     const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (validTypes.includes(selectedFile.type)) {
-      setFile(selectedFile);
-    } else {
-      alert("Please upload a valid JPG, PNG, or PDF report file.");
+    if (!validTypes.includes(selectedFile.type)) {
+      setErrorMessage("Please upload a valid JPG, PNG, or PDF file.");
+      return;
     }
+    const validationError = validateDatasetFile(selectedFile);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+    setFile(selectedFile);
   };
 
   return (
@@ -144,6 +163,25 @@ const UploadPage = () => {
               Securely upload a behavioral or medical document. Our AI will analyze the text and structure to identify potential autism markers.
             </p>
           </div>
+
+          {errorMessage && (
+            <div className="mb-6 flex items-start gap-4 bg-rose-500/10 border border-rose-500/40 rounded-2xl px-6 py-4 text-rose-300 animate-fade-in">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 shrink-0 mt-0.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              <div>
+                <p className="font-semibold text-rose-300 text-base mb-1">Irrelevant Image</p>
+                <p className="text-rose-400/80 text-sm leading-relaxed">{errorMessage}</p>
+              </div>
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="ml-auto text-rose-400 hover:text-rose-200 transition-colors"
+                title="Dismiss"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          )}
 
           <div className="mt-8">
             {!file ? (
